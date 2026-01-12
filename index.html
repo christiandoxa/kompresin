@@ -7,7 +7,13 @@
     <link data-trunk href="favicon.svg" rel="icon" type="image/svg+xml"/>
 
     <!-- Trunk builds the Rust -> WASM and exposes exports via window.wasmBindings -->
-    <link data-trunk data-wasm-opt="z" rel="rust"/>
+    <link
+            data-trunk
+            data-wasm-opt="z"
+            data-wasm-opt-params="--enable-bulk-memory --enable-nontrapping-float-to-int"
+            href="Cargo.toml"
+            rel="rust"
+    />
 
     <link data-trunk href="style.css" rel="css"/>
     <script data-trunk src="app.js" type="module"></script>
