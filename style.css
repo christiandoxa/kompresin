@@ -312,7 +312,7 @@ a {
     top: 0;
     left: 0;
     height: 100%;
-    width: var(--compare);
+    width: 100%;
     overflow: hidden;
     z-index: 2;
 }
@@ -321,6 +321,7 @@ a {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    clip-path: inset(0 calc(100% - var(--compare)) 0 0);
 }
 
 .compare-line {
