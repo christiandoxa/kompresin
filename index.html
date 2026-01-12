@@ -24,7 +24,7 @@
         </div>
         <h1>Kompresin</h1>
         <p>
-            Drop a <strong>PDF, JPG, or PNG</strong> and get a smaller file without uploading to a server.
+            Drop a <strong>PDF, JPG, or PNG</strong> and get a smaller file locally.
         </p>
     </header>
 
@@ -76,6 +76,12 @@
                 <input id="quality" max="100" min="1" type="range" value="80"/>
                 <div class="hint"><span id="qv">80</span></div>
                 <div class="hint">Lower = smaller file, higher = better detail.</div>
+            </div>
+
+            <div class="field">
+                <label>Target size (KB)</label>
+                <input id="targetSize" min="0" step="1" type="number" value="0"/>
+                <div class="hint">Set > 0 to hit a maximum size; disables the slider.</div>
             </div>
         </div>
 

@@ -194,6 +194,237 @@ pub fn encode_png_rgba(
     png::encode(&rgba, &opts).unwrap_or_default()
 }
 
+const MIN_TARGET_QUALITY: u8 = 1;
+
+fn estimate_quality(max_quality: u8, current_bytes: usize, target_bytes: usize) -> u8 {
+    if current_bytes == 0 || target_bytes == 0 {
+        return max_quality;
+    }
+    let ratio = (target_bytes as f32 / current_bytes as f32).clamp(0.05, 1.0);
+    let predicted = (max_quality as f32 * ratio.powf(0.6)).round() as i32;
+    predicted.clamp(1, max_quality as i32) as u8
+}
+
+fn encode_png_with_quality(
+    rgba: &[u8],
+    width: u32,
+    height: u32,
+    quality: u8,
+    preset: u8,
+    png_mode: &str,
+    png_max_colors: u16,
+    png_dither: bool,
+    png_force_quant: bool,
+) -> Vec<u8> {
+    let auto_level = clamp_u8(quality, 1, 100);
+    let colors_from_level = (8.0 + (auto_level as f32 / 100.0) * 248.0).round() as u16;
+    let (lossless, colors, dithering, force_quant) = match png_mode {
+        "lossless" => (true, png_max_colors, png_dither, png_force_quant),
+        "auto" => (false, colors_from_level, auto_level <= 50, auto_level < 90),
+        _ => (false, png_max_colors, png_dither, png_force_quant),
+    };
+
+    encode_png_rgba(
+        width,
+        height,
+        rgba.to_vec(),
+        preset,
+        lossless,
+        clamp_u16(colors, 1, 256),
+        dithering,
+        force_quant,
+    )
+}
+
+fn compress_png_to_target(
+    rgba: &[u8],
+    width: u32,
+    height: u32,
+    preset: u8,
+    png_mode: &str,
+    png_max_colors: u16,
+    png_dither: bool,
+    png_force_quant: bool,
+    max_quality: u8,
+    target_bytes: usize,
+) -> Vec<u8> {
+    let max_quality = clamp_u8(max_quality, 1, 100);
+    let min_quality = MIN_TARGET_QUALITY.min(max_quality);
+
+    let best = encode_png_with_quality(
+        rgba,
+        width,
+        height,
+        max_quality,
+        preset,
+        png_mode,
+        png_max_colors,
+        png_dither,
+        png_force_quant,
+    );
+    if best.len() <= target_bytes {
+        return best;
+    }
+
+    let mut lo = min_quality;
+    let mut hi = max_quality;
+    let mut best_under: Option<Vec<u8>> = None;
+    let mut smallest = best.clone();
+
+    let estimate = estimate_quality(max_quality, best.len(), target_bytes);
+    if estimate > min_quality && estimate < max_quality {
+        hi = estimate;
+    }
+
+    let mut iterations = 0;
+    while lo <= hi && iterations < 6 {
+        let mid = (lo as u16 + hi as u16) / 2;
+        let mid_q = mid as u8;
+        let out = encode_png_with_quality(
+            rgba,
+            width,
+            height,
+            mid_q,
+            preset,
+            png_mode,
+            png_max_colors,
+            png_dither,
+            png_force_quant,
+        );
+        if out.len() < smallest.len() {
+            smallest = out.clone();
+        }
+        if out.len() <= target_bytes {
+            best_under = Some(out);
+            lo = mid_q.saturating_add(1);
+        } else {
+            if mid_q == 0 {
+                break;
+            }
+            hi = mid_q.saturating_sub(1);
+        }
+        iterations += 1;
+    }
+
+    best_under.unwrap_or(smallest)
+}
+
+fn compress_jpeg_to_target(
+    rgba: &[u8],
+    width: u32,
+    height: u32,
+    preset: u8,
+    bg_r: u8,
+    bg_g: u8,
+    bg_b: u8,
+    max_quality: u8,
+    target_bytes: usize,
+) -> Vec<u8> {
+    let max_quality = clamp_u8(max_quality, 1, 100);
+    let min_quality = MIN_TARGET_QUALITY.min(max_quality);
+
+    let best = encode_jpeg_rgba(
+        width,
+        height,
+        rgba.to_vec(),
+        max_quality,
+        preset,
+        bg_r,
+        bg_g,
+        bg_b,
+    );
+    if best.len() <= target_bytes {
+        return best;
+    }
+
+    let mut lo = min_quality;
+    let mut hi = max_quality;
+    let mut best_under: Option<Vec<u8>> = None;
+    let mut smallest = best.clone();
+
+    let estimate = estimate_quality(max_quality, best.len(), target_bytes);
+    if estimate > min_quality && estimate < max_quality {
+        hi = estimate;
+    }
+
+    let mut iterations = 0;
+    while lo <= hi && iterations < 6 {
+        let mid = (lo as u16 + hi as u16) / 2;
+        let mid_q = mid as u8;
+        let out = encode_jpeg_rgba(
+            width,
+            height,
+            rgba.to_vec(),
+            mid_q,
+            preset,
+            bg_r,
+            bg_g,
+            bg_b,
+        );
+        if out.len() < smallest.len() {
+            smallest = out.clone();
+        }
+        if out.len() <= target_bytes {
+            best_under = Some(out);
+            lo = mid_q.saturating_add(1);
+        } else {
+            if mid_q == 0 {
+                break;
+            }
+            hi = mid_q.saturating_sub(1);
+        }
+        iterations += 1;
+    }
+
+    best_under.unwrap_or(smallest)
+}
+
+fn compress_pdf_to_target(
+    pdf: Vec<u8>,
+    max_quality: u8,
+    preset: u8,
+    target_bytes: usize,
+) -> Vec<u8> {
+    let max_quality = clamp_u8(max_quality, 1, 100);
+    let min_quality = MIN_TARGET_QUALITY.min(max_quality);
+    let best = compress_pdf_images(pdf.clone(), max_quality, preset);
+    if best.len() <= target_bytes {
+        return best;
+    }
+
+    let mut lo = min_quality;
+    let mut hi = max_quality;
+    let mut best_under: Option<Vec<u8>> = None;
+    let mut smallest = best.clone();
+
+    let estimate = estimate_quality(max_quality, best.len(), target_bytes);
+    if estimate > min_quality && estimate < max_quality {
+        hi = estimate;
+    }
+
+    let mut iterations = 0;
+    while lo <= hi && iterations < 6 {
+        let mid = (lo as u16 + hi as u16) / 2;
+        let mid_q = mid as u8;
+        let out = compress_pdf_images(pdf.clone(), mid_q, preset);
+        if out.len() < smallest.len() {
+            smallest = out.clone();
+        }
+        if out.len() <= target_bytes {
+            best_under = Some(out);
+            lo = mid_q.saturating_add(1);
+        } else {
+            if mid_q == 0 {
+                break;
+            }
+            hi = mid_q.saturating_sub(1);
+        }
+        iterations += 1;
+    }
+
+    best_under.unwrap_or(smallest)
+}
+
 #[wasm_bindgen]
 pub fn compress_file(
     bytes: Vec<u8>,
@@ -203,6 +434,7 @@ pub fn compress_file(
     quality: u8,
     preset: u8,
     max_side: u32,
+    target_kb: u32,
     bg_r: u8,
     bg_g: u8,
     bg_b: u8,
@@ -234,9 +466,14 @@ pub fn compress_file(
 
     let quality = clamp_u8(quality, 1, 100);
     let preset = clamp_u8(preset, 0, 2);
+    let target_bytes = target_kb.saturating_mul(1024) as usize;
 
     if out_mode == "pdf" {
-        let out = compress_pdf_images(orig_bytes, quality, preset);
+        let out = if target_bytes > 0 {
+            compress_pdf_to_target(orig_bytes, quality, preset, target_bytes)
+        } else {
+            compress_pdf_images(orig_bytes, quality, preset)
+        };
         return Ok(CompressionResult::new(out, "pdf".to_string()));
     }
 
@@ -254,32 +491,54 @@ pub fn compress_file(
 
     if out_mode == "png" {
         let png_mode = png_mode.to_lowercase();
-        let auto_level = quality;
-        let colors_from_level = (8.0 + (auto_level as f32 / 100.0) * 248.0).round() as u16;
-        let (lossless, colors, dithering, force_quant) = match png_mode.as_str() {
-            "lossless" => (true, png_max_colors, png_dither, png_force_quant),
-            "auto" => (false, colors_from_level, auto_level <= 50, auto_level < 90),
-            _ => (false, png_max_colors, png_dither, png_force_quant),
+        let enc_bytes = if target_bytes > 0 {
+            compress_png_to_target(
+                &rgba_raw,
+                width,
+                height,
+                preset,
+                &png_mode,
+                png_max_colors,
+                png_dither,
+                png_force_quant,
+                quality,
+                target_bytes,
+            )
+        } else {
+            encode_png_with_quality(
+                &rgba_raw,
+                width,
+                height,
+                quality,
+                preset,
+                &png_mode,
+                png_max_colors,
+                png_dither,
+                png_force_quant,
+            )
         };
-
-        let enc_bytes = encode_png_rgba(
-            width,
-            height,
-            rgba_raw,
-            preset,
-            lossless,
-            clamp_u16(colors, 1, 256),
-            dithering,
-            force_quant,
-        );
-        if !resized && kind == "png" && enc_bytes.len() >= orig_len {
+        if target_bytes == 0 && !resized && kind == "png" && enc_bytes.len() >= orig_len {
             return Ok(CompressionResult::new(orig_bytes, "png".to_string()));
         }
         return Ok(CompressionResult::new(enc_bytes, "png".to_string()));
     }
 
-    let enc_bytes = encode_jpeg_rgba(width, height, rgba_raw, quality, preset, bg_r, bg_g, bg_b);
-    if !resized && kind == "jpeg" && enc_bytes.len() >= orig_len {
+    let enc_bytes = if target_bytes > 0 {
+        compress_jpeg_to_target(
+            &rgba_raw,
+            width,
+            height,
+            preset,
+            bg_r,
+            bg_g,
+            bg_b,
+            quality,
+            target_bytes,
+        )
+    } else {
+        encode_jpeg_rgba(width, height, rgba_raw, quality, preset, bg_r, bg_g, bg_b)
+    };
+    if target_bytes == 0 && !resized && kind == "jpeg" && enc_bytes.len() >= orig_len {
         return Ok(CompressionResult::new(orig_bytes, "jpeg".to_string()));
     }
     Ok(CompressionResult::new(enc_bytes, "jpeg".to_string()))

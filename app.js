@@ -37,6 +37,7 @@ async function compressFile(file, wasm) {
     const preset = Number($("preset").value);
     const quality = Number($("quality").value);
     const maxSide = Number($("maxSide").value);
+    const targetSize = Number($("targetSize").value);
 
     const outModeSel = $("outMode").value;
     const pngMode = $("pngMode").value;
@@ -58,6 +59,7 @@ async function compressFile(file, wasm) {
         clamp(quality, 1, 100),
         clamp(preset, 0, 2),
         Math.max(0, maxSide | 0),
+        Math.max(0, targetSize | 0),
         bg_r,
         bg_g,
         bg_b,
@@ -163,6 +165,7 @@ window.addEventListener("TrunkApplicationStarted", () => {
     const status = $("status");
     const q = $("quality");
     const qv = $("qv");
+    const targetSize = $("targetSize");
 
     const syncPngFromLevel = () => {
         if ($("pngMode").value !== "auto") return;
@@ -174,6 +177,16 @@ window.addEventListener("TrunkApplicationStarted", () => {
     q.addEventListener("input", () => {
         qv.textContent = q.value;
         syncPngFromLevel();
+    });
+
+    const syncTargetToggle = () => {
+        const target = Number(targetSize.value);
+        const enabled = !(target > 0);
+        q.disabled = !enabled;
+        qv.textContent = enabled ? q.value : "Auto";
+    };
+    targetSize.addEventListener("input", () => {
+        syncTargetToggle();
     });
 
     $("pngMode").addEventListener("change", () => {
@@ -232,6 +245,7 @@ window.addEventListener("TrunkApplicationStarted", () => {
     });
 
     updateAdvancedVisibility(fileInput.files?.[0]);
+    syncTargetToggle();
     const updateCompareAspect = (img) => {
         const w = img.naturalWidth;
         const h = img.naturalHeight;
