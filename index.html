@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>Kompresin — Compress Files Locally</title>
+    <link data-trunk href="favicon.svg" rel="icon" type="image/svg+xml"/>
+
+    <!-- Trunk builds the Rust -> WASM and exposes exports via window.wasmBindings -->
+    <link data-trunk data-wasm-opt="z" rel="rust"/>
+
+    <link data-trunk href="style.css" rel="css"/>
+    <script data-trunk src="app.js" type="module"></script>
+
+</head>
+<body>
+<main class="wrap">
+    <header class="hero">
+        <div class="hero-top">
+            <div></div>
+            <button aria-label="Toggle theme" class="btn ghost" id="themeToggle" type="button">
+                Dark mode
+            </button>
+        </div>
+        <h1>Kompresin</h1>
+        <p>
+            Drop a <strong>PDF, JPG, or PNG</strong> and get a smaller file without uploading to a server.
+        </p>
+    </header>
+
+    <section class="card">
+        <div class="callout">
+            <div class="callout-title">How it works</div>
+            <ol class="steps">
+                <li>Choose a file.</li>
+                <li>Keep the recommended settings (or tweak if you know why).</li>
+                <li>Click Compress and download the result.</li>
+            </ol>
+        </div>
+
+        <div class="row">
+            <label class="file">
+                <input accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" id="file" type="file"/>
+                <span>Choose a file (PDF/JPG/PNG)</span>
+            </label>
+
+            <button class="btn primary" disabled id="run">Compress now</button>
+        </div>
+        <div class="hint">Everything runs locally in your browser. Your files never leave this device.</div>
+
+        <div class="grid">
+            <div class="field">
+                <label>Output format</label>
+                <select id="outMode">
+                    <option selected value="auto">Auto (recommended)</option>
+                    <option value="jpeg">JPEG</option>
+                    <option value="png">PNG</option>
+                    <option value="pdf">PDF (text preserved)</option>
+                </select>
+                <div class="hint">Auto picks JPEG for photos and PNG for graphics. PDF mode recompresses images and
+                    keeps text selectable.
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Preset</label>
+                <select id="preset">
+                    <option value="0">Fastest</option>
+                    <option selected value="1">Balanced (recommended)</option>
+                    <option value="2">Smallest file (slower)</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Compression level (1-100)</label>
+                <input id="quality" max="100" min="1" type="range" value="80"/>
+                <div class="hint"><span id="qv">80</span></div>
+                <div class="hint">Lower = smaller file, higher = better detail.</div>
+            </div>
+        </div>
+
+        <details class="details" hidden id="advancedPanel">
+            <summary>Advanced options (optional)</summary>
+            <div class="grid">
+                <div class="field">
+                    <label>Resize (max side in px)</label>
+                    <input id="maxSide" min="0" step="1" type="number" value="0"/>
+                    <div class="hint">Keep 0 to preserve original size.</div>
+                </div>
+
+                <div class="field">
+                    <label>Background for transparent PNGs</label>
+                    <select id="bg">
+                        <option selected value="transparent">Transparent (keep alpha)</option>
+                        <option value="255,255,255">White</option>
+                        <option value="0,0,0">Black</option>
+                        <option value="245,245,245">Light gray</option>
+                    </select>
+                    <div class="hint">Transparent forces PNG output to preserve alpha.</div>
+                </div>
+            </div>
+
+            <details class="details" id="pngPanel">
+                <summary>Advanced PNG options</summary>
+                <div class="grid">
+                    <div class="field">
+                        <label>PNG Mode</label>
+                        <select id="pngMode">
+                            <option selected value="auto">Auto (follow slider)</option>
+                            <option value="lossless">Lossless optimize</option>
+                            <option value="lossy">Lossy palette (quantization)</option>
+                        </select>
+                        <div class="hint">PNG "lossy" = palette quantization (e.g. pngquant). Good for UI/screenshots.
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>Max colors (1–256)</label>
+                        <input id="colors" max="256" min="1" type="number" value="256"/>
+                    </div>
+
+                    <div class="field">
+                        <label><input id="dither" type="checkbox"/> Dithering</label>
+                        <div class="hint">Helps gradients, but can add noise.</div>
+                    </div>
+
+                    <div class="field">
+                        <label><input id="forceQuant" type="checkbox"/> Force quantize</label>
+                        <div class="hint">Use when Auto skips quantization because it seems "not beneficial".</div>
+                    </div>
+                </div>
+            </details>
+        </details>
+
+        <div class="status" id="statusWrap">
+            <div id="status">Choose a file to start.</div>
+            <div aria-hidden="true" class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div class="compare" hidden id="compareWrap">
+            <div class="compare-head">Before / After preview</div>
+            <div class="compare-stage" id="compareStage" style="--compare: 50%;">
+                <img alt="Original preview" id="compareBefore"/>
+                <div class="compare-after">
+                    <img alt="Compressed preview" id="compareAfter"/>
+                </div>
+                <div aria-hidden="true" class="compare-line" id="compareLine"></div>
+            </div>
+        </div>
+
+        <div class="results">
+            <div>
+                <h3>Original</h3>
+                <div id="before"></div>
+            </div>
+            <div>
+                <h3>Compressed</h3>
+                <div id="after"></div>
+            </div>
+        </div>
+
+        <canvas class="preview" hidden id="canvas"></canvas>
+    </section>
+
+    <footer class="foot">
+        <p>
+            Tip: For screenshots and UI, try <em>Lossy palette</em> in the PNG options for much smaller files.
+        </p>
+    </footer>
+</main>
+</body>
+</html>

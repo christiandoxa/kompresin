@@ -1,0 +1,349 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+:root {
+    color-scheme: light;
+    --bg: #f5f2ec;
+    --panel: #ffffff;
+    --ink: #1b1f2a;
+    --muted: #5b6474;
+    --accent: #1d6b5e;
+    --accent-2: #f2c57b;
+    --border: rgba(27, 31, 42, 0.12);
+    --shadow: 0 10px 30px rgba(27, 31, 42, 0.08);
+    --grad-a: #f8e9d4;
+    --grad-b: #d7efe9;
+    --surface: #fbf7f1;
+    --surface-2: #fbfcff;
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0f1218;
+    --panel: #141922;
+    --ink: #e8edf7;
+    --muted: #a9b3c4;
+    --accent: #5bd6c1;
+    --accent-2: #f2c57b;
+    --border: rgba(232, 237, 247, 0.12);
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    --grad-a: #1c2a3f;
+    --grad-b: #113533;
+    --surface: #1a202b;
+    --surface-2: #161b24;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    color: var(--ink);
+    background: radial-gradient(1200px 800px at 10% -10%, var(--grad-a) 0%, transparent 60%),
+    radial-gradient(1200px 800px at 90% -10%, var(--grad-b) 0%, transparent 60%),
+    var(--bg);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+.wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 20px 40px;
+}
+
+.hero h1 {
+    margin: 0 0 8px;
+    font-size: clamp(28px, 3.5vw, 40px);
+    letter-spacing: -0.5px;
+}
+
+.hero p {
+    margin: 0 0 18px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+}
+
+.callout {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    background: var(--surface);
+    margin-bottom: 14px;
+}
+
+.callout-title {
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.steps {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--muted);
+}
+
+.steps li {
+    margin: 4px 0;
+}
+
+.row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.file {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+    border: 1px dashed var(--border);
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--surface-2);
+}
+
+.file input {
+    display: none;
+}
+
+.btn {
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    cursor: pointer;
+    font-weight: 600;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.btn.primary {
+    background: linear-gradient(180deg, var(--accent), #13564b);
+    color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.btn.ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink);
+}
+
+.btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.grid {
+    margin-top: 14px;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.field label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: var(--muted);
+}
+
+.field input[type="number"], .field select {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--ink);
+}
+
+.field input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+}
+
+.hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+}
+
+.details {
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: var(--surface-2);
+}
+
+.status {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    min-height: 20px;
+    background: var(--panel);
+}
+
+.progress {
+    margin-top: 8px;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 999px;
+    overflow: hidden;
+    display: none;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 200ms ease;
+}
+
+[data-theme="dark"] .progress {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.results {
+    margin-top: 12px;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.results h3 {
+    margin: 0 0 6px;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.preview {
+    margin-top: 12px;
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+}
+
+.foot {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+a {
+    color: inherit;
+}
+
+.compare {
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    background: var(--surface-2);
+}
+
+.compare-head {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 10px;
+}
+
+.compare-stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: 220px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background-image: linear-gradient(45deg, rgba(0, 0, 0, 0.12) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.12) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.12) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.12) 75%);
+    background-size: 24px 24px;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+}
+
+.compare-stage img {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+    z-index: 1;
+}
+
+.compare-after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--compare);
+    overflow: hidden;
+    z-index: 2;
+}
+
+.compare-after img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.compare-line {
+    position: absolute;
+    top: 0;
+    left: var(--compare);
+    width: 2px;
+    height: 100%;
+    background: var(--accent);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+    cursor: ew-resize;
+    z-index: 3;
+}
+
+.compare-line::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -7px;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: var(--panel);
+    border: 2px solid var(--accent);
+    transform: translateY(-50%);
+}

@@ -1,0 +1,4 @@
+# Optional config for Trunk
+[build]
+dist = "dist"
+public_url = "/"

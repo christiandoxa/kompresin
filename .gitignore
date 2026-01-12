@@ -1,0 +1,9 @@
+/dist/
+/target/
+/pkg/
+*.log
+*.tmp
+.DS_Store
+.idea/
+*.iml
+Cargo.lock
